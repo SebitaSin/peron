@@ -1,9 +1,38 @@
 import { fetchWithTimeout, normalizeMessages, ProviderError, withRetry, type LLMProvider, type LLMRequest, type LLMResult } from "./provider";
 
-export function openaiProvider(apiKey: string, model: string): LLMProvider {
+/** Sin LLM_MODEL se prueba en orden; si la clave no tiene acceso a un modelo (403/404) se pasa al siguiente y se recuerda el que anduvo. */
+const CANDIDATES = ["gpt-4.1", "gpt-4o", "gpt-4o-mini"];
+let working: string | null = null;
+
+export function openaiProvider(apiKey: string, model?: string): LLMProvider {
   return {
     name: "openai",
     async complete(req: LLMRequest): Promise<LLMResult> {
+      const order = model ? [model] : working ? [working] : CANDIDATES;
+      let last: unknown;
+      for (const m of order) {
+        try {
+          const r = await completeWith(apiKey, m, req);
+          if (!model) working = m;
+          return r;
+        } catch (e) {
+          last = e;
+          const st = e instanceof ProviderError ? e.status : 0;
+          if (!model && (st === 403 || st === 404)) {
+            working = null;
+            continue;
+          }
+          throw e;
+        }
+      }
+      throw last;
+    },
+  };
+}
+
+async function completeWith(apiKey: string, model: string, req: LLMRequest): Promise<LLMResult> {
+  {
+    {
       const body = {
         model,
         max_completion_tokens: req.maxTokens,
@@ -31,6 +60,6 @@ export function openaiProvider(apiKey: string, model: string): LLMProvider {
           usage: { input: j.usage?.prompt_tokens, output: j.usage?.completion_tokens },
         };
       });
-    },
-  };
+    }
+  }
 }

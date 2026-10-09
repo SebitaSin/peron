@@ -10,7 +10,7 @@ export function getProvider(): LLMProvider {
   const model = process.env.LLM_MODEL;
 
   if ((want === "openai" || (!want && !aKey)) && oKey) {
-    return openaiProvider(oKey, model || "gpt-4.1");
+    return openaiProvider(oKey, model);
   }
   if (aKey && want !== "openai") return anthropicProvider(aKey, model || "claude-sonnet-5-5");
   throw new ProviderNotConfigured();

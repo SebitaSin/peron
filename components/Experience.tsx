@@ -70,6 +70,7 @@ export default function Experience({ character, portrait }: { character: PublicC
   const [interim, setInterim] = useState("");
 
   const [live, setLive] = useState(false);
+  const [liveKind, setLiveKind] = useState<"cloud" | "browser">("cloud");
 
   const interrupted = useRef(false);
   const loadingRef = useRef(false);
@@ -81,8 +82,8 @@ export default function Experience({ character, portrait }: { character: PublicC
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   const caps = hydrated
-    ? { stt: getVoice().sttSupported(), tts: getVoice().ttsSupported() }
-    : { stt: false, tts: false };
+    ? { stt: getVoice().sttSupported(), tts: getVoice().ttsSupported(), live: getVoice().sttSupported() || !!navigator.mediaDevices?.getUserMedia }
+    : { stt: false, tts: false, live: false };
 
   useEffect(
     () => () => {
@@ -226,7 +227,7 @@ export default function Experience({ character, portrait }: { character: PublicC
 
   const startLive = useCallback(() => {
     const v = getVoice();
-    if (!v.sttSupported()) {
+    if (!caps.live) {
       setError("Tu navegador no permite conversar por voz. Probá con Chrome o Edge, o escribí tu mensaje.");
       return;
     }
@@ -237,6 +238,14 @@ export default function Experience({ character, portrait }: { character: PublicC
     v.startLive({
       lang: "es-AR",
       onInterim: setInterim,
+      onMode: setLiveKind,
+      onVoice: () => {
+        if (v.isSpeaking()) {
+          interrupted.current = true;
+          v.stopSpeaking();
+          setSpeaking(false);
+        }
+      },
       onHeard: (t) => {
         // Interrumpir: si Perón está hablando y lo que se oye no es su propio eco, se calla y escucha.
         if (v.isSpeaking() && wordCount(t) >= 2 && !isEcho(t)) {
@@ -262,7 +271,7 @@ export default function Experience({ character, portrait }: { character: PublicC
         else setError("Se cortó la escucha. Volvé a activar el modo en vivo.");
       },
     });
-  }, [isEcho]);
+  }, [isEcho, caps.live]);
 
   const toggleMic = useCallback(() => {
     const v = getVoice();
@@ -479,7 +488,7 @@ export default function Experience({ character, portrait }: { character: PublicC
             </button>
           </div>
         )}
-        {caps.stt && !live && (
+        {caps.live && !live && (
           <button
             type="button"
             onClick={startLive}
@@ -493,8 +502,8 @@ export default function Experience({ character, portrait }: { character: PublicC
           <div className="mx-auto mb-2 flex max-w-2xl items-center gap-3 rounded-xl border border-brass bg-brass/10 px-3 py-2.5 text-[13px] text-ivory" role="status" aria-live="polite">
             <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${speaking ? "bg-brass" : loading ? "bg-mist" : "listening bg-oxide"}`} aria-hidden />
             <span className="flex-1 leading-snug">
-              {speaking ? `${profile.short_name} habla… hablá cuando quieras para interrumpirlo` : loading ? "Pensando…" : "Te escucho…"}
-              <span className="block text-[11px] text-mist">Mejor con auriculares: así no se escucha a sí mismo.</span>
+              {speaking ? (liveKind === "cloud" ? `${profile.short_name} habla… hablá cuando quieras para interrumpirlo` : `${profile.short_name} habla… tocá Detener para interrumpirlo`) : loading ? "Pensando…" : "Te escucho…"}
+              <span className="block text-[11px] text-mist">Con auriculares se interrumpe mejor y no hay eco.</span>
             </span>
             <button type="button" onClick={stopLive} className="rounded-lg border border-ivory/25 px-3 py-1.5 text-[12.5px] hover:bg-ivory/10">
               Terminar

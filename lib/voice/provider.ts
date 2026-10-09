@@ -1,3 +1,4 @@
+import { VadLive } from "./vad";
 /** Abstracción de voz: se puede reemplazar el proveedor (p. ej. STT/TTS en la nube) sin tocar la UI. */
 export interface ListenHooks {
   lang: string;
@@ -18,6 +19,10 @@ export interface LiveHooks {
   onHeard(text: string): void;
   /** Frase completa del usuario (tras una pausa corta). */
   onUtterance(text: string): void;
+  /** Se detectó voz del usuario (sirve para interrumpir al personaje mientras habla). Sólo con transcripción en la nube. */
+  onVoice?(): void;
+  /** Cómo está escuchando: 'cloud' (full dúplex, con cancelación de eco) o 'browser' (se pausa mientras el personaje habla). */
+  onMode?(kind: "cloud" | "browser"): void;
   /** Error que corta el modo en vivo (permiso denegado, no soportado, inestable). */
   onError(code: string): void;
 }
@@ -134,7 +139,7 @@ export class BrowserVoiceProvider implements VoiceProvider {
     }
   }
 
-  private live: { stopped: boolean; rec: RecognitionLike | null; timer: ReturnType<typeof setTimeout> | null } | null = null;
+  private live: { stopped: boolean; paused: boolean; rec: RecognitionLike | null; timer: ReturnType<typeof setTimeout> | null; poll: ReturnType<typeof setInterval> | null } | null = null;
 
   isLive() {
     return this.live !== null;
@@ -145,7 +150,8 @@ export class BrowserVoiceProvider implements VoiceProvider {
     if (!Ctor) return h.onError("unsupported");
     this.stopListening();
     this.stopLive();
-    const st: { stopped: boolean; rec: RecognitionLike | null; timer: ReturnType<typeof setTimeout> | null } = { stopped: false, rec: null, timer: null };
+    const st: NonNullable<typeof this.live> = { stopped: false, paused: false, rec: null, timer: null, poll: null };
+    h.onMode?.("browser");
     this.live = st;
     let buf = "";
     let errors = 0;
@@ -160,7 +166,7 @@ export class BrowserVoiceProvider implements VoiceProvider {
       h.onError(code);
     };
     const begin = () => {
-      if (st.stopped) return;
+      if (st.stopped || st.paused) return;
       const rec = new Ctor();
       rec.lang = h.lang;
       rec.interimResults = true;
@@ -196,7 +202,7 @@ export class BrowserVoiceProvider implements VoiceProvider {
           flush();
         } else if (buf) flush();
         st.rec = null;
-        if (!st.stopped) setTimeout(begin, errors > 2 ? 800 : 150);
+        if (!st.stopped && !st.paused) setTimeout(begin, errors > 2 ? 800 : 150);
       };
       st.rec = rec;
       try {
@@ -207,6 +213,27 @@ export class BrowserVoiceProvider implements VoiceProvider {
         else setTimeout(begin, 500);
       }
     };
+    // Medio dúplex: mientras el personaje habla se apaga el micrófono (no capta su propia voz) y vuelve a abrirse al terminar.
+    let lastSpeaking = 0;
+    st.poll = setInterval(() => {
+      const speaking = this.isSpeaking();
+      if (speaking) lastSpeaking = Date.now();
+      if (speaking && !st.paused) {
+        st.paused = true;
+        buf = "";
+        if (st.timer) clearTimeout(st.timer);
+        st.timer = null;
+        h.onInterim("");
+        try {
+          st.rec?.abort();
+        } catch {
+          /* nada */
+        }
+      } else if (!speaking && st.paused && Date.now() - lastSpeaking > 700) {
+        st.paused = false;
+        begin();
+      }
+    }, 120);
     begin();
   }
 
@@ -215,6 +242,7 @@ export class BrowserVoiceProvider implements VoiceProvider {
     if (!st) return;
     st.stopped = true;
     if (st.timer) clearTimeout(st.timer);
+    if (st.poll) clearInterval(st.poll);
     try {
       st.rec?.abort();
     } catch {
@@ -368,6 +396,46 @@ export class CloudVoiceProvider extends BrowserVoiceProvider {
       this.cloudSpeaking = false;
       h?.onEnd?.();
     })();
+  }
+
+  private vad: VadLive | null = null;
+
+  override isLive() {
+    return this.vad !== null || super.isLive();
+  }
+
+  /** Con OPENAI_API_KEY en el servidor: escucha con detección de voz + transcripción en la nube (sin pitidos, con cancelación de eco y se puede interrumpir). Si no, dictado del navegador en medio dúplex. */
+  override startLive(h: LiveHooks) {
+    this.stopLive();
+    const vad = new VadLive();
+    this.vad = vad;
+    void (async () => {
+      let cloud = false;
+      try {
+        const r = await fetch("/api/health", { cache: "no-store" });
+        cloud = !!((await r.json()) as { stt_configured?: boolean }).stt_configured;
+      } catch {
+        /* sin red: dictado del navegador */
+      }
+      if (this.vad !== vad) return;
+      if (cloud) {
+        const res = await vad.start(h, () => this.isSpeaking());
+        if (this.vad !== vad) return;
+        if (res === "ok") return void h.onMode?.("cloud");
+        if (res === "denied") {
+          this.vad = null;
+          return h.onError("not-allowed");
+        }
+      }
+      this.vad = null;
+      super.startLive(h);
+    })();
+  }
+
+  override stopLive() {
+    this.vad?.stop();
+    this.vad = null;
+    super.stopLive();
   }
 
   override stopSpeaking() {

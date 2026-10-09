@@ -21,7 +21,7 @@ export async function POST(req: Request) {
   if (!rateLimit(`tts:${clientIp(req)}`, 120, 10 * 60_000).ok) return Response.json({ error: "rate_limited" }, { status: 429 });
 
   const body = (await req.json().catch(() => null)) as { text?: unknown; emotion?: unknown } | null;
-  const text = typeof body?.text === "string" ? body.text.replace(/[<>\u0000-\u001f]/g, " ").trim().slice(0, 500) : "";
+  const text = typeof body?.text === "string" ? body.text.replace(/[<>\u0000-\u001f]/g, " ").trim().slice(0, 900) : "";
   if (!text) return Response.json({ error: "empty" }, { status: 400 });
   const emotion = (EMOTIONS as readonly string[]).includes(String(body?.emotion)) ? (body!.emotion as Emotion) : "sereno";
 
@@ -34,7 +34,7 @@ export async function POST(req: Request) {
         model: process.env.TTS_MODEL ?? "gpt-4o-mini-tts",
         voice: process.env.TTS_VOICE ?? "ash",
         input: text,
-        instructions: `Acento argentino rioplatense criollo de mediados del siglo XX, hombre de unos 55 años, ex militar y conductor político: voz de barítono sobria, pausada y didáctica, que explica con paciencia, con pausas cortas entre ideas y una cadencia de conversación en privado, nunca de locutor ni de caricatura; se escucha una sonrisa leve cuando se ríe de sí mismo. ${STYLE[emotion]}`,
+        instructions: `Acento argentino rioplatense criollo de mediados del siglo XX, hombre de unos 55 años, ex militar y conductor político: voz de barítono sobria, pausada y didáctica, con el mismo timbre, acento y velocidad constantes de principio a fin (ritmo lento y parejo, unas 120 palabras por minuto), que explica con paciencia, con pausas cortas entre ideas y una cadencia de conversación en privado, nunca de locutor ni de caricatura; se escucha una sonrisa leve cuando se ríe de sí mismo. ${STYLE[emotion]}`,
         response_format: "mp3",
       }),
       signal: AbortSignal.timeout(20_000),

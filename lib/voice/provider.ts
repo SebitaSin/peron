@@ -217,7 +217,9 @@ export class CloudVoiceProvider extends BrowserVoiceProvider {
 
   override speak(text: string, h?: SpeakHooks, emotion?: string) {
     if (this.cloudOff || typeof window === "undefined" || !this.audio) return super.speak(text, h, emotion);
-    const parts = splitSentences(text).slice(0, 8);
+    // Primera frase sola (empieza ya) y el resto en un solo bloque: menos cortes, voz más pareja.
+    const sents = splitSentences(text);
+    const parts = sents.length > 1 ? [sents[0], sents.slice(1).join(" ")] : sents;
     if (!parts.length) return;
     this.stopSpeaking();
     const my = ++this.token;

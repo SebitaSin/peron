@@ -45,7 +45,7 @@ export async function POST(req: Request) {
         headers: { "content-type": "application/json", "xi-api-key": elKey },
         body: JSON.stringify({
           text,
-          model_id: process.env.ELEVENLABS_MODEL ?? "eleven_multilingual_v2",
+          model_id: process.env.ELEVENLABS_MODEL ?? "eleven_flash_v2_5",
           language_code: "es",
           voice_settings: { ...EL[emotion], similarity_boost: 0.75, use_speaker_boost: true },
         }),

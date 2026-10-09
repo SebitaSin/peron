@@ -13,6 +13,8 @@ export interface BasisItem {
   sources: Pick<SourceRecord, "source_id" | "title" | "author" | "date" | "reliability" | "url_checked">[];
 }
 
+const FAST_BLOCK = "MODO VOZ (conversación hablada en tiempo real): respondé en 1 a 3 frases cortas (máximo unas 45 palabras) salvo que pidan explícitamente una explicación larga. En <basis> devolvé siempre [] y en <memory> sólo los campos que cambiaron de verdad. Primero lo esencial: que se pueda empezar a decir en voz alta de inmediato.";
+
 export interface TurnResult {
   reply: string;
   emotion: Emotion;
@@ -34,6 +36,8 @@ export async function runTurn(args: {
   history: LLMMessage[];
   message: string;
   interrupted?: boolean;
+  /** Modo voz: respuestas cortas y sin fundamentos, para que la conversación hablada tenga menos demora. */
+  fast?: boolean;
   provider: LLMProvider;
 }): Promise<TurnResult> {
   const { pack, history, message, provider } = args;
@@ -60,11 +64,13 @@ export async function runTurn(args: {
 
   const signals: TurnSignals = { revealedNow, techNow, dateChanged, interrupted: !!args.interrupted };
   const ctx = buildContext({ pack, state: s, history, userMessage: message, evidence, signals });
+  if (args.fast) ctx.system = [...ctx.system, { text: FAST_BLOCK }];
+  const maxTokens = args.fast ? 320 : 700;
 
   // 4. Generación + verificación de fugas (una corrección; luego respuesta segura).
   let regenerated = false;
   let fallback = false;
-  let res = await provider.complete({ system: ctx.system, messages: ctx.messages, maxTokens: 700, temperature: 0.9 });
+  let res = await provider.complete({ system: ctx.system, messages: ctx.messages, maxTokens, temperature: 0.9 });
   let parsed = parseModelOutput(res.text);
   let leaks = detectLeaks(parsed.reply, pack, s);
 
@@ -73,7 +79,7 @@ export async function runTurn(args: {
     const correction = {
       text: `CORRECCIÓN OBLIGATORIA: tu borrador mencionó cosas que NO sabés en esta fecha: ${describeLeaks(leaks)}. Reescribí la respuesta completa sin usar ni insinuar eso; si el interlocutor lo trajo, tratalo como noticia nueva y preguntá. Mantené el mismo formato de salida.`,
     };
-    res = await provider.complete({ system: [...ctx.system, correction], messages: ctx.messages, maxTokens: 700, temperature: 0.7 });
+    res = await provider.complete({ system: [...ctx.system, correction], messages: ctx.messages, maxTokens, temperature: 0.7 });
     parsed = parseModelOutput(res.text);
     leaks = detectLeaks(parsed.reply, pack, s);
   }

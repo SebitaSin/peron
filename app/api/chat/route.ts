@@ -64,7 +64,7 @@ export async function POST(req: Request) {
   }
 
   try {
-    const r = await runTurn({ pack, state, history, message, interrupted: body.interrupted === true, provider });
+    const r = await runTurn({ pack, state, history, message, interrupted: body.interrupted === true, fast: body.fast === true, provider });
     logEvent("chat_turn", {
       character: slug,
       turn: r.state.turn,

@@ -166,7 +166,7 @@ export default function Experience({ character, portrait }: { character: PublicC
         const res = await fetch("/api/chat", {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ character: slug, state, history, message: text, interrupted: wasInterrupted }),
+          body: JSON.stringify({ character: slug, state, history, message: text, interrupted: wasInterrupted, fast: viaVoice || live }),
         });
         const data = (await res.json().catch(() => ({}))) as { reply?: string; emotion?: string; state?: SessionState; basis?: BasisItem[]; error?: string };
         if (!res.ok || !data.reply) {
@@ -206,7 +206,7 @@ export default function Experience({ character, portrait }: { character: PublicC
         }
       }
     },
-    [loading, messages, state, slug, speakerOn, stopSpeaking],
+    [loading, messages, state, slug, speakerOn, stopSpeaking, live],
   );
   useEffect(() => {
     sendRef.current = send;

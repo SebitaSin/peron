@@ -7,7 +7,7 @@ import type { LiveHooks } from "./provider";
  *  - Permite interrumpir: si el usuario habla mientras el personaje habla, avisa con onVoice().
  */
 const TARGET_RATE = 16000;
-const END_SILENCE_MS = 700;
+const END_SILENCE_MS = 480;
 const MAX_UTTERANCE_MS = 15000;
 const MIN_UTTERANCE_MS = 450;
 const PREROLL_FRAMES = 10;

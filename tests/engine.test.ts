@@ -220,3 +220,10 @@ describe("emoción y frases para la voz", () => {
     expect(p.join(" ")).toContain("amigo.");
   });
 });
+
+describe("etiqueta de ánimo filtrada en el texto", () => {
+  it("quita 'Sereno.' al inicio del reply", () => {
+    expect(parseEmo("<emo>sereno</emo><reply>Sereno. \nLo escucho, amigo.</reply>").reply).toBe("Lo escucho, amigo.");
+    expect(parseEmo("<reply>Firme es mi criterio, amigo.</reply>").reply).toBe("Firme es mi criterio, amigo.");
+  });
+});

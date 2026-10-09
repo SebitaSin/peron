@@ -36,7 +36,7 @@ export function parseModelOutput(raw: string): ParsedOutput {
   const replyTag = tag(raw, "reply");
   const wellFormed = replyTag !== null;
   const fallback = raw.replace(/<emo>[\s\S]*?<\/emo>/gi, "").replace(/<memory>[\s\S]*?<\/memory>/gi, "").replace(/<basis>[\s\S]*?<\/basis>/gi, "").replace(/<\/?reply>/gi, "");
-  const reply = toSpokenText(replyTag ?? fallback);
+  const reply = toSpokenText(replyTag ?? fallback).replace(/^(?:sereno|c[aá]lido|firme|ir[oó]nico|grave|emocionado|curioso)\s*[.:;\-–—]\s*/i, "").trim();
   const emoRaw = (tag(raw, "emo") ?? "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z]/g, "");
   const emotion: Emotion = (EMOTIONS as readonly string[]).includes(emoRaw) ? (emoRaw as Emotion) : "sereno";
 

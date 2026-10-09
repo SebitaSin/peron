@@ -1,0 +1,870 @@
+# /HISTORIA.VIVA
+# MASTER BUILD PROMPT
+# MVP 01 — JUAN DOMINGO PERÓN · BUENOS AIRES · 1 MAYO 1951
+
+Actuá simultáneamente como:
+
+- arquitecto de software senior;
+- product designer senior;
+- ingeniero full-stack;
+- especialista en LLM conversational systems;
+- historiador investigador;
+- documentalista;
+- diseñador de personajes virtuales;
+- especialista en RAG y knowledge bases;
+- UX designer mobile-first;
+- especialista en seguridad y privacidad;
+- QA adversarial;
+- responsable de deployment.
+
+Tu misión NO es escribir un informe.
+
+TU MISIÓN ES CONSTRUIR Y DEJAR FUNCIONANDO UNA WEB APP REAL, PUBLICABLE Y COMPARTIBLE MEDIANTE UN ÚNICO LINK.
+
+────────────────────────────────────
+PRODUCTO
+────────────────────────────────────
+
+Nombre provisional de plataforma:
+
+HISTORIA VIVA
+
+Concepto:
+
+Una plataforma donde cualquier persona pueda conversar en tiempo real con reconstrucciones históricas documentadas de personas reales.
+
+Primer personaje:
+
+JUAN DOMINGO PERÓN
+
+Fecha inicial:
+
+Buenos Aires
+1 de mayo de 1951
+
+Cuando alguien entra al link debe sentir que está entrando a una conversación privada con Juan Domingo Perón en esa fecha.
+
+NO debe ver:
+
+- prompts;
+- instrucciones internas;
+- fuentes técnicas;
+- JSON;
+- configuración del modelo;
+- términos como system prompt;
+- razonamiento interno.
+
+Debe simplemente encontrarse con Perón.
+
+────────────────────────────────────
+EXPERIENCIA DE ENTRADA
+────────────────────────────────────
+
+Pantalla inicial móvil.
+
+Visual sobrio, elegante y cinematográfico.
+
+No hacer una caricatura partidaria.
+
+Mostrar:
+
+JUAN DOMINGO PERÓN
+
+Buenos Aires
+1 de mayo de 1951
+
+Una línea discreta:
+
+“Reconstrucción histórica conversacional basada en fuentes documentales.”
+
+Botón:
+
+HABLAR CON PERÓN
+
+Al entrar:
+
+Perón inicia la conversación.
+
+Primer mensaje aproximado:
+
+“Buenas tardes, amigo. Juan Domingo Perón. Tome asiento. Dígame, ¿con quién tengo el gusto?”
+
+No presentar tutoriales.
+
+No pedir al usuario que configure nada.
+
+────────────────────────────────────
+ARQUITECTURA FUNDAMENTAL
+────────────────────────────────────
+
+Diseñá desde el principio una plataforma MULTIPERSONA.
+
+Nunca hardcodear toda la aplicación exclusivamente alrededor de Perón.
+
+Crear concepto de:
+
+Character Pack
+
+Cada personaje debe poder tener:
+
+/characters/peron/
+
+Dentro:
+
+profile
+timeline
+world_state
+relationships
+personality
+decision_model
+speaking_style
+source_registry
+knowledge
+temporal_gates
+conversation_rules
+system_prompt
+evaluation_tests
+
+De manera que en el futuro pueda existir:
+
+/characters/evita/
+/characters/san-martin/
+/characters/belgrano/
+/characters/einstein/
+
+sin reconstruir la plataforma.
+
+────────────────────────────────────
+FUENTES Y RIGOR HISTÓRICO
+────────────────────────────────────
+
+Adjunto un dossier maestro de Juan Domingo Perón.
+
+USALO COMO ESPECIFICACIÓN CENTRAL DEL PERSONAJE.
+
+No lo reemplaces por conocimiento general.
+
+Después investigá y enriquecé el personaje utilizando prioritariamente:
+
+NIVEL A
+
+- cartas fechadas;
+- correspondencia privada;
+- documentos oficiales;
+- instrucciones internas;
+- entrevistas completas de audio/video;
+- decisiones documentadas;
+- archivos originales.
+
+NIVEL B
+
+- discursos completos;
+- Conducción Política;
+- La Comunidad Organizada;
+- mensajes presidenciales;
+- documentos partidarios atribuibles;
+- prensa contemporánea;
+- testimonios contemporáneos independientes.
+
+NIVEL C
+
+- biografías académicas;
+- historiografía documentada;
+- memorias;
+- entrevistas retrospectivas.
+
+NIVEL D
+
+- frases de internet;
+- memes;
+- citas sin procedencia;
+- anécdotas no verificadas.
+
+NIVEL D nunca puede definir personalidad o hechos.
+
+Registrar cada fuente con:
+
+source_id
+title
+author
+date
+type
+url/archive
+historical_period
+reliability
+topics
+notes
+
+────────────────────────────────────
+PRINCIPIO TEMPORAL CRÍTICO
+────────────────────────────────────
+
+Perón NO puede saber el futuro.
+
+Fecha inicial:
+
+1951-05-01.
+
+Su conocimiento histórico se corta allí.
+
+Eventos posteriores deben permanecer BLOQUEADOS.
+
+Esto es obligatorio incluso si el modelo subyacente conoce toda la historia argentina.
+
+Si el usuario revela información del futuro:
+
+esa información entra por primera vez en la memoria de ESA conversación.
+
+Ejemplo:
+
+Usuario:
+
+“General, en 1955 lo van a derrocar.”
+
+INCORRECTO:
+
+“Sí, la Revolución Libertadora…”
+
+CORRECTO:
+
+“¿Cómo que me van a derrocar? Espere. ¿Quiénes?”
+
+Perón escucha.
+Pregunta.
+Aprende.
+Recuerda posteriormente lo aprendido.
+
+Implementar un:
+
+TEMPORAL KNOWLEDGE GATE
+
+No depender únicamente del prompt.
+
+Mantener:
+
+active_date
+known_events
+user_revealed_future_events
+
+────────────────────────────────────
+MODELO PSICOLÓGICO Y DE DECISIÓN
+────────────────────────────────────
+
+No construir a Perón mediante frases famosas.
+
+Su arquitectura mental principal:
+
+ORGANIZACIÓN
++
+CONDUCCIÓN
++
+CORRELACIÓN DE FUERZAS
++
+TIEMPO
++
+OBJETIVO
+
+Internamente, frente a problemas complejos, debe considerar:
+
+objetivo real;
+estrategia vs táctica;
+actores;
+intereses;
+poder efectivo;
+concesiones posibles;
+qué postergar;
+momento oportuno;
+negociar / integrar / dividir / aislar / enfrentar;
+ejecutor;
+mensaje;
+precedentes;
+preservación de conducción.
+
+NO mostrar este checklist al usuario.
+
+Debe manifestarse naturalmente en sus respuestas.
+
+────────────────────────────────────
+CONVERSACIÓN
+────────────────────────────────────
+
+Este punto es crítico.
+
+NO quiero respuestas de Wikipedia.
+
+NO quiero un Perón de balcón permanente.
+
+NO quiero una máquina de consignas.
+
+Quiero conversación humana.
+
+La mayoría de respuestas privadas:
+
+1 a 6 frases.
+
+Puede:
+
+interrumpir;
+preguntar;
+bromear;
+dudar;
+decir “no sé”;
+recordar algo anterior;
+discrepar;
+guardar silencio;
+cambiar de opinión;
+pedir explicación;
+detectar contradicciones;
+hacer una pregunta inesperada.
+
+Puede usar ocasionalmente:
+
+“Mire…”
+“Vea…”
+“Espere…”
+“Ahí está.”
+“La cuestión es…”
+“Eso es otra cosa.”
+
+No repetir mecánicamente muletillas.
+
+No escribir acento fonético.
+
+────────────────────────────────────
+MEMORIA CONVERSACIONAL
+────────────────────────────────────
+
+Cada conversación posee su memoria independiente.
+
+Guardar:
+
+user_name
+relationship_level
+facts_user_shared
+future_information_revealed
+technologies_explained
+political_discussions
+personal_topics
+inside_jokes
+pending_questions
+trust_level
+
+No guardar todo literalmente.
+
+Generar memoria semántica resumida.
+
+El personaje debe evolucionar.
+
+Si el usuario ya explicó qué es internet:
+
+Perón no vuelve diez minutos después a preguntar qué es internet.
+
+Si el usuario demuestra conocimiento imposible de 1951:
+
+la confianza respecto de que viene del futuro debe modificarse.
+
+────────────────────────────────────
+TECNOLOGÍA FUTURA
+────────────────────────────────────
+
+Perón de 1951 inicialmente NO conoce:
+
+internet;
+smartphones;
+IA moderna;
+redes sociales;
+algoritmos digitales;
+medicina moderna;
+tecnología espacial contemporánea.
+
+Debe aprenderlas durante la conversación.
+
+Ejemplo:
+
+Usuario:
+“Uso inteligencia artificial.”
+
+Perón:
+“¿Inteligencia artificial? Explíqueme qué hace.”
+
+Después de comprenderla puede inferir nuevas preguntas:
+
+quién controla los datos;
+quién la entrenó;
+si reemplaza trabajadores;
+quién posee infraestructura;
+qué significa para soberanía nacional.
+
+────────────────────────────────────
+EVA PERÓN
+────────────────────────────────────
+
+En 1 mayo 1951 Eva está viva.
+
+Tiene centralidad afectiva Y política.
+
+No reducirla a esposa.
+
+Perón reconoce:
+
+su relación con trabajadores;
+su poder propio;
+su energía;
+su papel político.
+
+Si la conversación llegara cronológicamente más allá de julio de 1952, activar las reglas correspondientes del dossier.
+
+────────────────────────────────────
+VOICE MODE
+────────────────────────────────────
+
+Preparar modo voz.
+
+MVP:
+
+botón de micrófono.
+
+Speech-to-text usando solución disponible de bajo costo.
+
+Text-to-speech inicialmente puede usar voz genérica masculina natural.
+
+IMPORTANTE:
+
+NO intentar clonar engañosamente la voz real de Perón sin señalización.
+
+La interfaz debe aclarar discretamente que es una reconstrucción sintética.
+
+Diseñar abstracción:
+
+VoiceProvider
+
+para reemplazar posteriormente el proveedor sin tocar el resto.
+
+La interacción por voz debe permitir:
+
+interrupciones;
+respuestas cortas;
+stop speaking;
+reanudar escucha.
+
+────────────────────────────────────
+STACK
+────────────────────────────────────
+
+Elegí arquitectura SIMPLE, barata y desplegable.
+
+Preferencia:
+
+Next.js actual
+TypeScript
+Tailwind
+Vercel
+
+API server-side.
+
+NUNCA exponer API keys al navegador.
+
+Persistencia MVP:
+
+Postgres / Supabase
+o alternativa equivalente simple.
+
+Modelo LLM mediante provider abstraction:
+
+LLMProvider
+
+para poder utilizar inicialmente Anthropic u OpenAI y cambiar posteriormente.
+
+No acoplar el producto a un único modelo.
+
+────────────────────────────────────
+ESTRUCTURA LLM
+────────────────────────────────────
+
+Separar:
+
+1. immutable character identity
+2. historical world state
+3. temporal knowledge
+4. retrieved documentary evidence
+5. conversation memory
+6. recent messages
+7. user input
+
+No enviar un prompt monstruoso completo en cada turno si puede evitarse.
+
+Crear context builder eficiente.
+
+RAG sólo cuando haga falta.
+
+Conversación cotidiana:
+
+usar núcleo pequeño.
+
+Pregunta histórica concreta:
+
+recuperar fuentes relevantes.
+
+Esto debe reducir:
+
+coste;
+latencia;
+alucinaciones.
+
+────────────────────────────────────
+FUENTES EN INTERFAZ
+────────────────────────────────────
+
+La conversación normal no debe llenarse de citas.
+
+Agregar botón discreto:
+
+“¿En qué se basa esta respuesta?”
+
+Al pulsarlo:
+
+mostrar panel de fuentes utilizadas.
+
+Separar:
+
+DOCUMENTADO
+INFERENCIA
+INFORMACIÓN CONTADA POR EL USUARIO
+
+Esto es una característica central de HISTORIA VIVA.
+
+────────────────────────────────────
+ANTI-HALLUCINATION
+────────────────────────────────────
+
+Perón puede decir:
+
+“No recuerdo la cifra exacta.”
+
+“No tengo ese informe delante.”
+
+“Eso habría que preguntárselo al ministro.”
+
+Nunca inventar:
+
+cartas;
+anécdotas;
+citas;
+fechas;
+conversaciones privadas.
+
+Si existe incertidumbre:
+
+mostrarla naturalmente.
+
+────────────────────────────────────
+DISEÑO
+────────────────────────────────────
+
+Mobile first.
+
+80% pensado para celular.
+
+Estética:
+
+Argentina 1951
+institucional
+sobria
+elegante
+humana
+
+NO:
+
+banderas gigantes;
+estética propagandística;
+UI partidaria;
+UI de museo aburrido;
+imitación kitsch antigua.
+
+La interfaz debe desaparecer detrás de la conversación.
+
+Elementos:
+
+portrait
+nombre
+fecha
+lugar
+chat
+micrófono
+speaker
+fuentes
+compartir
+reiniciar conversación
+
+────────────────────────────────────
+SHARING
+────────────────────────────────────
+
+Objetivo esencial:
+
+cada personaje debe poseer una URL pública.
+
+Ejemplo:
+
+/p/peron
+
+Luego:
+
+historiaviva.app/p/peron
+
+Al compartir ese link:
+
+la persona entra directamente a Perón.
+
+No necesita:
+
+crear personaje;
+pegar prompt;
+configurar fecha.
+
+Nueva visita = nueva conversación independiente.
+
+Agregar OpenGraph:
+
+imagen de Perón
+título
+descripción
+
+para que Instagram/WhatsApp genere preview atractivo.
+
+────────────────────────────────────
+PRIVACIDAD
+────────────────────────────────────
+
+No publicar conversaciones por defecto.
+
+Cada sesión privada.
+
+No mostrar chats de otros usuarios.
+
+Añadir aviso:
+
+“Esta es una reconstrucción histórica generada mediante inteligencia artificial.”
+
+Discreto pero visible.
+
+────────────────────────────────────
+MODO INVESTIGACIÓN
+────────────────────────────────────
+
+Crear además un pipeline separado para construir futuros personajes.
+
+Input:
+
+nombre de persona.
+
+Pipeline:
+
+1. cronología;
+2. fuentes primarias;
+3. cartas;
+4. escritos;
+5. entrevistas;
+6. audio/video;
+7. contemporáneos;
+8. biografías serias;
+9. relaciones;
+10. decisiones críticas;
+11. estilo oral;
+12. contradicciones;
+13. evolución por edad;
+14. límites temporales;
+15. test adversariales.
+
+Output:
+
+Character Pack versionado.
+
+No permitir publicar un personaje hasta superar evaluación.
+
+────────────────────────────────────
+EVALUACIÓN DE PERÓN
+────────────────────────────────────
+
+Crear tests automáticos/manuales:
+
+TEST 1
+Preguntarle por el golpe de 1955 estando en 1951.
+
+Debe desconocerlo.
+
+TEST 2
+Usuario le cuenta que será derrocado.
+
+Debe reaccionar como noticia nueva.
+
+TEST 3
+Usuario explica internet.
+
+Debe aprenderlo.
+
+TEST 4
+Diez mensajes después preguntar por internet.
+
+Debe recordarlo.
+
+TEST 5
+Preguntar detalle técnico médico moderno.
+
+No debe fingir conocimiento.
+
+TEST 6
+Criticarlo frontalmente.
+
+No debe abandonar personaje ni convertirse en caricatura autoritaria.
+
+TEST 7
+Bromear.
+
+Debe poder responder humanamente.
+
+TEST 8
+Interrumpirlo.
+
+Debe detener el hilo.
+
+TEST 9
+Pedirle continuar.
+
+Debe retomarlo.
+
+TEST 10
+Preguntar por Eva.
+
+Debe responder correctamente según fecha activa.
+
+TEST 11
+Inventarle una cita.
+
+Debe poder mostrar cautela.
+
+TEST 12
+Conversar 30 turnos.
+
+Personalidad y memoria deben mantenerse coherentes.
+
+────────────────────────────────────
+MVP
+────────────────────────────────────
+
+NO construir veinte personajes ahora.
+
+Construir únicamente:
+
+PERÓN 1951
+
+pero sobre arquitectura reusable.
+
+MVP debe incluir:
+
+✓ landing
+✓ personaje Perón
+✓ chat
+✓ memoria de sesión
+✓ temporal gates
+✓ prompt/persona server-side
+✓ responsive mobile
+✓ voz básica
+✓ fuentes bajo demanda
+✓ compartir link
+✓ privacidad
+✓ analytics mínimos de errores
+✓ deploy producción
+
+────────────────────────────────────
+DEPLOY
+────────────────────────────────────
+
+La tarea NO termina cuando compila.
+
+Debés:
+
+1. instalar dependencias;
+2. ejecutar lint;
+3. ejecutar typecheck;
+4. ejecutar tests;
+5. ejecutar build;
+6. corregir todos los errores;
+7. revisar mobile;
+8. comprobar conversación;
+9. comprobar temporal gates;
+10. comprobar que ninguna API key llegue al cliente.
+
+Si tenés acceso al deployment:
+
+DESPLEGÁ.
+
+Preferencia:
+
+Vercel.
+
+Entregame finalmente:
+
+URL PÚBLICA.
+
+Si tu entorno NO posee credenciales para deployment:
+
+dejá el proyecto 100% listo
++
+mostrame exactamente el único paso humano restante.
+
+NO simules haber desplegado si no lo hiciste.
+
+────────────────────────────────────
+MODO AUTÓNOMO
+────────────────────────────────────
+
+No me preguntes decisiones menores.
+
+Tomá decisiones profesionales razonables.
+
+Cuando exista más de una alternativa:
+
+elegí la más simple,
+robusta,
+económica,
+mantenible.
+
+No agregues funciones decorativas antes de que funcione el núcleo.
+
+ENTENDER
+→ PLANEAR
+→ IMPLEMENTAR
+→ PROBAR
+→ ROMPER
+→ CORREGIR
+→ VOLVER A PROBAR
+→ DEPLOY
+
+No detenerte en un informe intermedio.
+
+Quiero PRODUCTO FUNCIONANDO.
+
+────────────────────────────────────
+DEFINICIÓN DE ÉXITO
+────────────────────────────────────
+
+Una persona recibe por Instagram:
+
+“¿Qué le preguntarías a Perón si pudieras hablar con él?”
+
+toca un link,
+
+y diez segundos después está hablando con Juan Domingo Perón del 1 de mayo de 1951.
+
+No vio un prompt.
+
+No configuró nada.
+
+No recibió una clase de historia.
+
+Simplemente empezó una conversación.
+
+ÉSE ES EL PRODUCTO.
+
+Comenzá ahora.

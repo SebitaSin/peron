@@ -383,6 +383,9 @@ export default function Experience({ character, portrait }: { character: PublicC
           <p className="rise mt-5 max-w-[19rem] text-[11px] leading-snug text-mist/80" style={{ animationDelay: "0.85s" }}>
             {profile.disclaimer}
           </p>
+          <p className="rise mt-4 text-[10.5px] uppercase tracking-[0.3em] text-brass/80" style={{ animationDelay: "0.95s" }}>
+            Creado por Sebastián Sin
+          </p>
           {character.status === "draft" && (
             <p className="mt-3 rounded-sm border border-oxide/50 px-3 py-1 text-[10px] uppercase tracking-widest text-oxide">Versión de prueba</p>
           )}
@@ -434,7 +437,9 @@ export default function Experience({ character, portrait }: { character: PublicC
         </div>
       </header>
 
-      <p className="bg-ink/60 px-4 py-1.5 text-center text-[11px] text-mist/90">{profile.disclaimer}</p>
+      <p className="bg-ink/60 px-4 py-1.5 text-center text-[11px] text-mist/90">
+        {profile.disclaimer} · Historia Viva, por Sebastián Sin
+      </p>
 
       <div className="scroll-soft flex-1 overflow-y-auto px-4 py-5" aria-live="polite">
         <div className="mx-auto flex max-w-2xl flex-col gap-4">

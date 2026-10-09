@@ -10,6 +10,8 @@ export const metadata: Metadata = {
   title: { default: "Historia Viva", template: "%s · Historia Viva" },
   description: "Conversá con reconstrucciones históricas documentadas de personas reales.",
   applicationName: "Historia Viva",
+  authors: [{ name: "Sebastián Sin" }],
+  creator: "Sebastián Sin",
 };
 
 export const viewport: Viewport = {

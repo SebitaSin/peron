@@ -64,6 +64,7 @@ export default async function OgImage({ params }: { params: Promise<{ slug: stri
           <div style={{ fontSize: 84, lineHeight: 1.05, marginTop: 18, display: "flex" }}>{name}</div>
           <div style={{ fontSize: 34, color: "#9aa5b8", marginTop: 22, display: "flex" }}>{when}</div>
           <div style={{ fontSize: 28, marginTop: 38, display: "flex", color: "#f3eee2" }}>Conversá con una reconstrucción histórica.</div>
+          <div style={{ fontSize: 22, marginTop: 30, display: "flex", color: "#b79a63", letterSpacing: 3 }}>Creado por Sebastián Sin</div>
         </div>
       </div>
     ),

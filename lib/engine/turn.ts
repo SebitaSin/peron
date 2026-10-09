@@ -64,7 +64,7 @@ export async function runTurn(args: {
   // 4. Generación + verificación de fugas (una corrección; luego respuesta segura).
   let regenerated = false;
   let fallback = false;
-  let res = await provider.complete({ system: ctx.system, messages: ctx.messages, maxTokens: 700, temperature: 0.85 });
+  let res = await provider.complete({ system: ctx.system, messages: ctx.messages, maxTokens: 700, temperature: 0.9 });
   let parsed = parseModelOutput(res.text);
   let leaks = detectLeaks(parsed.reply, pack, s);
 

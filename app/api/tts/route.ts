@@ -15,15 +15,49 @@ const STYLE: Record<Emotion, string> = {
   curioso: "Curioso y atento, con interés genuino; entonación que sube al preguntar.",
 };
 
+/** Estabilidad/estilo de ElevenLabs por ánimo: menos estabilidad = más expresividad. */
+const EL: Record<Emotion, { stability: number; style: number }> = {
+  sereno: { stability: 0.6, style: 0.15 },
+  calido: { stability: 0.5, style: 0.3 },
+  firme: { stability: 0.55, style: 0.35 },
+  ironico: { stability: 0.4, style: 0.45 },
+  grave: { stability: 0.65, style: 0.2 },
+  emocionado: { stability: 0.3, style: 0.6 },
+  curioso: { stability: 0.45, style: 0.3 },
+};
+
 export async function POST(req: Request) {
+  const elKey = process.env.ELEVENLABS_API_KEY;
+  const elVoice = process.env.ELEVENLABS_VOICE_ID;
   const key = process.env.OPENAI_API_KEY;
-  if (!key) return Response.json({ error: "not_configured" }, { status: 503 });
+  if (!(elKey && elVoice) && !key) return Response.json({ error: "not_configured" }, { status: 503 });
   if (!rateLimit(`tts:${clientIp(req)}`, 120, 10 * 60_000).ok) return Response.json({ error: "rate_limited" }, { status: 429 });
 
   const body = (await req.json().catch(() => null)) as { text?: unknown; emotion?: unknown } | null;
   const text = typeof body?.text === "string" ? body.text.replace(/[<>\u0000-\u001f]/g, " ").trim().slice(0, 900) : "";
   if (!text) return Response.json({ error: "empty" }, { status: 400 });
   const emotion = (EMOTIONS as readonly string[]).includes(String(body?.emotion)) ? (body!.emotion as Emotion) : "sereno";
+
+  if (elKey && elVoice) {
+    try {
+      const r = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${encodeURIComponent(elVoice)}/stream?output_format=mp3_44100_128`, {
+        method: "POST",
+        headers: { "content-type": "application/json", "xi-api-key": elKey },
+        body: JSON.stringify({
+          text,
+          model_id: process.env.ELEVENLABS_MODEL ?? "eleven_multilingual_v2",
+          language_code: "es",
+          voice_settings: { ...EL[emotion], similarity_boost: 0.75, use_speaker_boost: true },
+        }),
+        signal: AbortSignal.timeout(20_000),
+      });
+      if (r.ok && r.body) return new Response(r.body, { headers: { "content-type": "audio/mpeg", "cache-control": "no-store" } });
+      logEvent("tts_error", { provider: "elevenlabs", status: r.status });
+    } catch {
+      logEvent("tts_error", { provider: "elevenlabs", status: 0 });
+    }
+    if (!key) return Response.json({ error: "upstream" }, { status: 502 });
+  }
 
   const base = process.env.OPENAI_BASE_URL ?? "https://api.openai.com";
   try {

@@ -9,7 +9,8 @@ export function GET() {
     {
       ok: true,
       llm_configured: providerConfigured(),
-      tts_configured: !!process.env.OPENAI_API_KEY,
+      tts_configured: !!(process.env.OPENAI_API_KEY || (process.env.ELEVENLABS_API_KEY && process.env.ELEVENLABS_VOICE_ID)),
+      tts_provider: process.env.ELEVENLABS_API_KEY && process.env.ELEVENLABS_VOICE_ID ? "elevenlabs" : process.env.OPENAI_API_KEY ? "openai" : null,
       allow_draft: process.env.ALLOW_DRAFT_CHARACTERS === "1",
       characters: listSlugs().map((s) => ({ slug: s, status: statusOf(s) })),
     },

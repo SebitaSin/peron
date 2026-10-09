@@ -69,7 +69,14 @@ export default function Experience({ character, portrait }: { character: PublicC
   const [listening, setListening] = useState(false);
   const [interim, setInterim] = useState("");
 
+  const [live, setLive] = useState(false);
+
   const interrupted = useRef(false);
+  const loadingRef = useRef(false);
+  const sendRef = useRef<(raw: string, viaVoice?: boolean) => Promise<void>>(async () => {});
+  const pendingRef = useRef("");
+  const lastReplyRef = useRef("");
+  const lastSpokeEnd = useRef(0);
   const endRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -77,7 +84,16 @@ export default function Experience({ character, portrait }: { character: PublicC
     ? { stt: getVoice().sttSupported(), tts: getVoice().ttsSupported() }
     : { stt: false, tts: false };
 
-  useEffect(() => () => getVoice().stopSpeaking(), []);
+  useEffect(
+    () => () => {
+      getVoice().stopLive();
+      getVoice().stopSpeaking();
+    },
+    [],
+  );
+  useEffect(() => {
+    loadingRef.current = loading;
+  }, [loading]);
 
   useEffect(() => {
     if (!hydrated) return;
@@ -158,11 +174,22 @@ export default function Experience({ character, portrait }: { character: PublicC
           setError(ERRORS[data.error ?? "upstream"] ?? ERRORS.upstream);
           return;
         }
+        lastReplyRef.current = data.reply;
         const reply: Msg = { id: uid(), role: "assistant", content: data.reply, basis: data.basis ?? [] };
         setMessages((m) => [...m, reply]);
         if (data.state) setState(data.state);
         if ((speakerOn || viaVoice) && getVoice().ttsSupported()) {
-          getVoice().speak(data.reply, { onStart: () => setSpeaking(true), onEnd: () => setSpeaking(false) }, data.emotion);
+          getVoice().speak(
+            data.reply,
+            {
+              onStart: () => setSpeaking(true),
+              onEnd: () => {
+                lastSpokeEnd.current = Date.now();
+                setSpeaking(false);
+              },
+            },
+            data.emotion,
+          );
         }
       } catch {
         setMessages((m) => m.filter((x) => x.id !== userMsg.id));
@@ -170,10 +197,72 @@ export default function Experience({ character, portrait }: { character: PublicC
         setError(ERRORS.network);
       } finally {
         setLoading(false);
+        // En vivo: lo que el usuario dijo mientras Perón pensaba se envía junto, sin perderlo.
+        if (pendingRef.current) {
+          const p = pendingRef.current;
+          pendingRef.current = "";
+          setTimeout(() => void sendRef.current(p, true), 150);
+        }
       }
     },
     [loading, messages, state, slug, speakerOn, stopSpeaking],
   );
+  useEffect(() => {
+    sendRef.current = send;
+  }, [send]);
+
+  const isEcho = useCallback((heard: string) => {
+    const v = getVoice();
+    if (!v.isSpeaking() && Date.now() - lastSpokeEnd.current > 2500) return false;
+    return looksLikeEcho(heard, lastReplyRef.current);
+  }, []);
+
+  const stopLive = useCallback(() => {
+    getVoice().stopLive();
+    pendingRef.current = "";
+    setLive(false);
+    setInterim("");
+  }, []);
+
+  const startLive = useCallback(() => {
+    const v = getVoice();
+    if (!v.sttSupported()) {
+      setError("Tu navegador no permite conversar por voz. Probá con Chrome o Edge, o escribí tu mensaje.");
+      return;
+    }
+    v.unlock();
+    setError(null);
+    setSpeakerOn(true);
+    setLive(true);
+    v.startLive({
+      lang: "es-AR",
+      onInterim: setInterim,
+      onHeard: (t) => {
+        // Interrumpir: si Perón está hablando y lo que se oye no es su propio eco, se calla y escucha.
+        if (v.isSpeaking() && wordCount(t) >= 2 && !isEcho(t)) {
+          interrupted.current = true;
+          v.stopSpeaking();
+          setSpeaking(false);
+        }
+      },
+      onUtterance: (t) => {
+        setInterim("");
+        if (isEcho(t)) return;
+        if (loadingRef.current) {
+          pendingRef.current = (pendingRef.current + " " + t).trim();
+          return;
+        }
+        void sendRef.current(t, true);
+      },
+      onError: (code) => {
+        setLive(false);
+        setInterim("");
+        if (code === "not-allowed" || code === "service-not-allowed") setError("Para conversar en vivo necesito permiso para usar el micrófono.");
+        else if (code === "unsupported") setError("Tu navegador no permite conversar por voz. Escribí tu mensaje.");
+        else setError("Se cortó la escucha. Volvé a activar el modo en vivo.");
+      },
+    });
+  }, [isEcho]);
 
   const toggleMic = useCallback(() => {
     const v = getVoice();
@@ -233,6 +322,7 @@ export default function Experience({ character, portrait }: { character: PublicC
 
   const restart = () => {
     stopSpeaking();
+    stopLive();
     getVoice().stopListening();
     setMenu(false);
     if (!window.confirm("¿Reiniciar la conversación? Perón no recordará nada de lo hablado.")) return;
@@ -389,6 +479,28 @@ export default function Experience({ character, portrait }: { character: PublicC
             </button>
           </div>
         )}
+        {caps.stt && !live && (
+          <button
+            type="button"
+            onClick={startLive}
+            className="mx-auto mb-2 flex w-full max-w-2xl items-center justify-center gap-2 rounded-xl border border-brass/60 bg-brass/10 px-4 py-3 text-[14px] font-medium text-ivory transition hover:bg-brass/20 active:scale-[0.99]"
+          >
+            <IconWave />
+            Conversar en vivo · sin apretar nada
+          </button>
+        )}
+        {live && (
+          <div className="mx-auto mb-2 flex max-w-2xl items-center gap-3 rounded-xl border border-brass bg-brass/10 px-3 py-2.5 text-[13px] text-ivory" role="status" aria-live="polite">
+            <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${speaking ? "bg-brass" : loading ? "bg-mist" : "listening bg-oxide"}`} aria-hidden />
+            <span className="flex-1 leading-snug">
+              {speaking ? `${profile.short_name} habla… hablá cuando quieras para interrumpirlo` : loading ? "Pensando…" : "Te escucho…"}
+              <span className="block text-[11px] text-mist">Mejor con auriculares: así no se escucha a sí mismo.</span>
+            </span>
+            <button type="button" onClick={stopLive} className="rounded-lg border border-ivory/25 px-3 py-1.5 text-[12.5px] hover:bg-ivory/10">
+              Terminar
+            </button>
+          </div>
+        )}
         <form
           className="mx-auto flex max-w-2xl items-end gap-2"
           onSubmit={(e) => {
@@ -412,7 +524,7 @@ export default function Experience({ character, portrait }: { character: PublicC
             aria-label="Tu mensaje"
             className="max-h-32 min-h-[48px] flex-1 resize-none rounded-2xl border border-ivory/15 bg-night px-4 py-3 text-[16px] leading-snug text-ivory placeholder:text-mist/70 focus:border-brass focus:outline-none"
           />
-          {caps.stt && (
+          {caps.stt && !live && (
             <button
               type="button"
               onClick={toggleMic}
@@ -444,6 +556,26 @@ export default function Experience({ character, portrait }: { character: PublicC
   );
 }
 
+function wordCount(t: string): number {
+  return t.trim().split(/\s+/).filter(Boolean).length;
+}
+
+/** Eco: el micrófono captó la propia voz del personaje saliendo por el parlante. */
+function looksLikeEcho(heard: string, reply: string): boolean {
+  const norm = (x: string) =>
+    x
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9ñ ]/g, " ")
+      .split(/\s+/)
+      .filter((w) => w.length >= 3);
+  const h = norm(heard);
+  if (!h.length) return false;
+  const r = new Set(norm(reply));
+  return h.filter((w) => r.has(w)).length / h.length >= 0.6;
+}
+
 function formatDate(iso: string): string {
   const M = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
   const [y, m, d] = iso.split("-").map(Number);
@@ -455,6 +587,13 @@ function IconSend() {
   return (
     <svg {...ico}>
       <path d="M5 12h14M13 6l6 6-6 6" />
+    </svg>
+  );
+}
+function IconWave() {
+  return (
+    <svg {...ico}>
+      <path d="M4 12v0M8 8v8M12 4v16M16 8v8M20 12v0" />
     </svg>
   );
 }

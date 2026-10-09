@@ -10,6 +10,17 @@ export interface SpeakHooks {
   onStart?(): void;
   onEnd?(): void;
 }
+/** Modo en vivo: micrófono siempre abierto, sin apretar nada, interrumpible. */
+export interface LiveHooks {
+  lang: string;
+  onInterim(text: string): void;
+  /** Cada vez que se oye algo (parcial o final); sirve para interrumpir al personaje. */
+  onHeard(text: string): void;
+  /** Frase completa del usuario (tras una pausa corta). */
+  onUtterance(text: string): void;
+  /** Error que corta el modo en vivo (permiso denegado, no soportado, inestable). */
+  onError(code: string): void;
+}
 export interface VoiceProvider {
   readonly id: string;
   sttSupported(): boolean;
@@ -21,6 +32,9 @@ export interface VoiceProvider {
   unlock(): void;
   stopSpeaking(): void;
   isSpeaking(): boolean;
+  startLive(h: LiveHooks): void;
+  stopLive(): void;
+  isLive(): boolean;
 }
 
 interface RecognitionLike {
@@ -118,6 +132,95 @@ export class BrowserVoiceProvider implements VoiceProvider {
     } catch {
       /* ya detenido */
     }
+  }
+
+  private live: { stopped: boolean; rec: RecognitionLike | null; timer: ReturnType<typeof setTimeout> | null } | null = null;
+
+  isLive() {
+    return this.live !== null;
+  }
+
+  startLive(h: LiveHooks) {
+    const Ctor = recognitionCtor();
+    if (!Ctor) return h.onError("unsupported");
+    this.stopListening();
+    this.stopLive();
+    const st: { stopped: boolean; rec: RecognitionLike | null; timer: ReturnType<typeof setTimeout> | null } = { stopped: false, rec: null, timer: null };
+    this.live = st;
+    let buf = "";
+    let errors = 0;
+    const flush = () => {
+      st.timer = null;
+      const t = buf.trim();
+      buf = "";
+      if (t) h.onUtterance(t);
+    };
+    const fatal = (code: string) => {
+      this.stopLive();
+      h.onError(code);
+    };
+    const begin = () => {
+      if (st.stopped) return;
+      const rec = new Ctor();
+      rec.lang = h.lang;
+      rec.interimResults = true;
+      rec.continuous = true;
+      rec.maxAlternatives = 1;
+      rec.onresult = (e) => {
+        errors = 0;
+        let interim = "";
+        for (let i = e.resultIndex; i < e.results.length; i++) {
+          const r = e.results[i];
+          const t = (r[0]?.transcript ?? "").trim();
+          if (r.isFinal) buf = (buf + " " + t).trim();
+          else interim += " " + t;
+        }
+        interim = interim.trim();
+        const heard = (buf + " " + interim).trim();
+        if (st.timer) clearTimeout(st.timer);
+        st.timer = null;
+        if (heard) {
+          h.onInterim(heard);
+          h.onHeard(heard);
+        }
+        if (buf && !interim) st.timer = setTimeout(flush, 550);
+      };
+      rec.onerror = (e) => {
+        if (e.error === "not-allowed" || e.error === "service-not-allowed" || e.error === "audio-capture") return fatal(e.error);
+        errors++;
+        if (errors > 8) fatal("unstable");
+      };
+      rec.onend = () => {
+        if (st.timer) {
+          clearTimeout(st.timer);
+          flush();
+        } else if (buf) flush();
+        st.rec = null;
+        if (!st.stopped) setTimeout(begin, errors > 2 ? 800 : 150);
+      };
+      st.rec = rec;
+      try {
+        rec.start();
+      } catch {
+        errors++;
+        if (errors > 8) fatal("start-failed");
+        else setTimeout(begin, 500);
+      }
+    };
+    begin();
+  }
+
+  stopLive() {
+    const st = this.live;
+    if (!st) return;
+    st.stopped = true;
+    if (st.timer) clearTimeout(st.timer);
+    try {
+      st.rec?.abort();
+    } catch {
+      /* ya detenido */
+    }
+    this.live = null;
   }
 
   protected pickVoice(): SpeechSynthesisVoice | undefined {

@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "
 import type { PublicCharacter } from "@/characters/types";
 import type { SessionState } from "@/lib/engine/state";
 import type { BasisItem } from "@/lib/engine/turn";
-import { BrowserVoiceProvider, type VoiceProvider } from "@/lib/voice/provider";
+import { CloudVoiceProvider, type VoiceProvider } from "@/lib/voice/provider";
 import Portrait from "./Portrait";
 import SourcesSheet from "./SourcesSheet";
 
@@ -21,7 +21,7 @@ interface Saved {
 }
 
 let voiceSingleton: VoiceProvider | null = null;
-const getVoice = (): VoiceProvider => (voiceSingleton ??= new BrowserVoiceProvider());
+const getVoice = (): VoiceProvider => (voiceSingleton ??= new CloudVoiceProvider());
 const noopSubscribe = () => () => {};
 
 function loadSaved(key: string): Saved | null {
@@ -132,6 +132,7 @@ export default function Experience({ character, portrait }: { character: PublicC
     async (raw: string, viaVoice = false) => {
       const text = raw.trim();
       if (!text || loading) return;
+      if (speakerOn || viaVoice) getVoice().unlock();
       if (getVoice().isSpeaking()) {
         interrupted.current = true;
         stopSpeaking();
@@ -150,7 +151,7 @@ export default function Experience({ character, portrait }: { character: PublicC
           headers: { "content-type": "application/json" },
           body: JSON.stringify({ character: slug, state, history, message: text, interrupted: wasInterrupted }),
         });
-        const data = (await res.json().catch(() => ({}))) as { reply?: string; state?: SessionState; basis?: BasisItem[]; error?: string };
+        const data = (await res.json().catch(() => ({}))) as { reply?: string; emotion?: string; state?: SessionState; basis?: BasisItem[]; error?: string };
         if (!res.ok || !data.reply) {
           setMessages((m) => m.filter((x) => x.id !== userMsg.id));
           setInput(text);
@@ -161,7 +162,7 @@ export default function Experience({ character, portrait }: { character: PublicC
         setMessages((m) => [...m, reply]);
         if (data.state) setState(data.state);
         if ((speakerOn || viaVoice) && getVoice().ttsSupported()) {
-          getVoice().speak(data.reply, { onStart: () => setSpeaking(true), onEnd: () => setSpeaking(false) });
+          getVoice().speak(data.reply, { onStart: () => setSpeaking(true), onEnd: () => setSpeaking(false) }, data.emotion);
         }
       } catch {
         setMessages((m) => m.filter((x) => x.id !== userMsg.id));
@@ -184,6 +185,7 @@ export default function Experience({ character, portrait }: { character: PublicC
       interrupted.current = true;
       stopSpeaking();
     }
+    v.unlock();
     setError(null);
     setListening(true);
     setInterim("");
@@ -210,6 +212,7 @@ export default function Experience({ character, portrait }: { character: PublicC
 
   const toggleSpeaker = () => {
     if (speakerOn) stopSpeaking();
+    else getVoice().unlock();
     setSpeakerOn((s) => !s);
   };
 

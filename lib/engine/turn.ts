@@ -2,7 +2,7 @@ import type { CharacterPack, SourceRecord } from "@/characters/types";
 import type { LLMMessage, LLMProvider } from "@/lib/llm/provider";
 import { buildContext, type TurnSignals } from "./context";
 import { detectLeaks, detectRevealed, detectTech, detectYears, parseActiveDateDirective, type Leaks } from "./gate";
-import { parseModelOutput, type BasisKind } from "./output";
+import { parseModelOutput, type BasisKind, type Emotion } from "./output";
 import { retrieve } from "./retrieval";
 import { applyPatch, type SessionState } from "./state";
 import { clip } from "./text";
@@ -15,6 +15,7 @@ export interface BasisItem {
 
 export interface TurnResult {
   reply: string;
+  emotion: Emotion;
   state: SessionState;
   basis: BasisItem[];
   meta: { regenerated: boolean; fallback: boolean; retrieved: string[]; model: string; usage?: { input?: number; output?: number; cache_read?: number } };
@@ -108,6 +109,7 @@ export async function runTurn(args: {
 
   return {
     reply,
+    emotion: fallback ? ("grave" as const) : parsed.emotion,
     state: out,
     basis,
     meta: { regenerated, fallback, retrieved: evidence.map((r) => r.passage.id), model: res.model, usage: res.usage },

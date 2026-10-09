@@ -32,7 +32,7 @@ Mientras eso no ocurra, el personaje está en **draft**: `/p/peron` devuelve 404
 | Variable | Uso |
 |---|---|
 | `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` | Sólo servidor. Sin ninguna, el chat responde 503 `not_configured` (nunca respuestas simuladas). |
-| `LLM_PROVIDER`, `LLM_MODEL` | `anthropic` (modelo por defecto `claude-sonnet-5-5`) u `openai` (`LLM_MODEL` obligatorio). |
+| `LLM_PROVIDER`, `LLM_MODEL` | `anthropic` (modelo por defecto `claude-sonnet-5-5`) u `openai` (`LLM_MODEL`, por defecto `gpt-4.1`; sin verificar contra tu cuenta, cambialo si falla). |
 | `ALLOW_DRAFT_CHARACTERS` | `1` sirve personajes sin evaluación aprobada. |
 | `NEXT_PUBLIC_SITE_URL` | URL pública para OpenGraph (opcional en Vercel). |
 

@@ -77,7 +77,7 @@ export async function POST(req: Request) {
       out: r.meta.usage?.output,
       cache_read: r.meta.usage?.cache_read,
     });
-    return json({ reply: r.reply, state: r.state, basis: r.basis });
+    return json({ reply: r.reply, emotion: r.emotion, state: r.state, basis: r.basis });
   } catch (e) {
     const status = e instanceof ProviderError ? e.status : 0;
     logEvent("chat_error", { character: slug, status, name: e instanceof Error ? e.name : "unknown" });

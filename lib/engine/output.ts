@@ -7,8 +7,11 @@ export interface RawBasis {
   text: string;
   source_ids: string[];
 }
+export const EMOTIONS = ["sereno", "calido", "firme", "ironico", "grave", "emocionado", "curioso"] as const;
+export type Emotion = (typeof EMOTIONS)[number];
 export interface ParsedOutput {
   reply: string;
+  emotion: Emotion;
   patch: MemoryPatch;
   basis: RawBasis[];
   wellFormed: boolean;
@@ -32,8 +35,10 @@ function json(s: string | null): unknown {
 export function parseModelOutput(raw: string): ParsedOutput {
   const replyTag = tag(raw, "reply");
   const wellFormed = replyTag !== null;
-  const fallback = raw.replace(/<memory>[\s\S]*?<\/memory>/gi, "").replace(/<basis>[\s\S]*?<\/basis>/gi, "").replace(/<\/?reply>/gi, "");
+  const fallback = raw.replace(/<emo>[\s\S]*?<\/emo>/gi, "").replace(/<memory>[\s\S]*?<\/memory>/gi, "").replace(/<basis>[\s\S]*?<\/basis>/gi, "").replace(/<\/?reply>/gi, "");
   const reply = toSpokenText(replyTag ?? fallback);
+  const emoRaw = (tag(raw, "emo") ?? "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z]/g, "");
+  const emotion: Emotion = (EMOTIONS as readonly string[]).includes(emoRaw) ? (emoRaw as Emotion) : "sereno";
 
   const mem = json(tag(raw, "memory"));
   const patch: MemoryPatch = mem && typeof mem === "object" && !Array.isArray(mem) ? (mem as MemoryPatch) : {};
@@ -51,5 +56,5 @@ export function parseModelOutput(raw: string): ParsedOutput {
       basis.push({ kind, text, source_ids: ids });
     }
   }
-  return { reply, patch, basis, wellFormed };
+  return { reply, emotion, patch, basis, wellFormed };
 }

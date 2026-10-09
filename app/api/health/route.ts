@@ -9,6 +9,7 @@ export function GET() {
     {
       ok: true,
       llm_configured: providerConfigured(),
+      tts_configured: !!process.env.OPENAI_API_KEY,
       allow_draft: process.env.ALLOW_DRAFT_CHARACTERS === "1",
       characters: listSlugs().map((s) => ({ slug: s, status: statusOf(s) })),
     },

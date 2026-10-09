@@ -205,3 +205,18 @@ describe("texto", () => {
     expect(countSentences("Sí. Ahí está el problema. ¿Quién la controla?")).toBe(3);
   });
 });
+
+import { parseModelOutput as parseEmo } from "@/lib/engine/output";
+import { splitSentences } from "@/lib/voice/provider";
+describe("emoción y frases para la voz", () => {
+  it("lee <emo>, tolera acentos y cae a sereno", () => {
+    expect(parseEmo("<emo>Irónico</emo><reply>Mire usted.</reply><memory>{}</memory><basis>[]</basis>").emotion).toBe("ironico");
+    expect(parseEmo("<emo>furioso</emo><reply>Hola.</reply>").emotion).toBe("sereno");
+    expect(parseEmo("<reply>Hola.</reply>").emotion).toBe("sereno");
+  });
+  it("parte en frases y no deja frases diminutas", () => {
+    const p = splitSentences("Buenas tardes. ¿Con quién tengo el gusto? Dígame qué lo trae por aquí, amigo.");
+    expect(p.length).toBeGreaterThanOrEqual(2);
+    expect(p.join(" ")).toContain("amigo.");
+  });
+});
